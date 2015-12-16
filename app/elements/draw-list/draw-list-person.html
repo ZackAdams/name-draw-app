@@ -1,0 +1,137 @@
+<dom-module id="draw-list-person">
+  <style>
+    :host {
+      display: block;
+      background: #fff;
+      box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+    }
+    .collapsed {
+      
+    }
+    .expanded {
+      background: #fff;
+      margin: 10px 0;
+    }
+    :host:first-child .expanded {
+      margin-top: 0;
+    }
+    draw-list-rules: {
+      width: 100%;
+    }
+    paper-item {
+      outline: 0; //sorry, usibility no-no but it was getting on my nerves!
+    }
+    .disabled {
+      background-color: var(--paper-grey-100);
+      color: var(--paper-grey-400);
+    }
+    .disabled paper-icon-button{
+      display: none;
+    }
+  </style>
+  
+  <template>
+    <div class$={{_class}}>
+      <paper-item on-tap="toggle">
+        <div class="flex">
+          <span>{{name}}</span>
+        </div>
+        <paper-icon-button hidden$="{{!collapsed}}" icon="expand-more"></paper-icon-button>
+      </paper-item>
+      <div hidden$="{{collapsed}}">
+        <paper-item>
+          <content></content>
+        </paper-item>
+        <paper-item>
+          <paper-icon-button on-tap="remove" icon="delete" hidden$="{{!removeable}}"></paper-icon-button>
+          <div class="flex">
+          </div>
+          <paper-icon-button on-tap="toggle" icon="expand-less"></paper-icon-button>
+        </paper-item>
+      </div>
+    </div>
+  </template>
+    
+  <script>
+    (function () {
+      Polymer({
+        is: 'draw-list-person',
+        properties: {
+          name: {
+            type: String,
+            notify: true,
+            value: ""
+          },
+          collapsed: {
+            type: Boolean,
+            notify: true,
+            value: true
+          },
+          removeable: {
+            type: Boolean,
+            notify: true,
+            value: false
+          },
+          disabled: {
+            type: Boolean,
+            notify: true,
+            value: false
+          },
+          _icon: {
+            type: String,
+            value: "expand-more"
+          },
+          _class: {
+            type: String,
+            value: ""
+          },
+        },
+        ready: function() {
+          document.addEventListener('toggle', this.handleToggleEvent.bind(this));
+          this.updateClasses();
+        },
+        updateClasses: function() {
+          var c = "";
+          if (this.collapsed) {
+            c += " collapsed";
+          } else {
+            c += " expanded";
+          }
+          if (this.disabled) {
+            c += " disabled";
+          }
+          this.set('_class',c.trim());
+        },
+        handleToggleEvent: function (e) {
+          if(!this.collapsed && !this.isSameNode(e.target)) {
+            this.collapse();
+          }
+        },
+        toggle: function() {
+          if(this.collapsed) {
+            this.expand();
+          } else {
+            this.collapse();
+          }
+        },
+        expand: function() {
+          if (!this.disabled) {
+            this._icon = "expand-less";
+            this.collapsed = false;
+            this.updateClasses();
+            this.fire('toggle');
+          }
+        },
+        collapse: function() {
+          this._icon = "expand-more";
+          this.collapsed = true;
+          this.updateClasses();
+        },
+        remove: function (e) {
+          this.fire('remove');
+        }
+      });
+    })();
+  </script>
+
+</dom-module>

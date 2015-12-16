@@ -1,0 +1,30 @@
+<dom-module id="draw-list-datasource">
+  <style>
+
+  </style>
+  
+  <template>
+    <firebase-collection id="fb" write-only="true" location="https://incandescent-fire-4896.firebaseio.com/test" log="true"></firebase-document>
+  </template>
+
+  <script>
+    (function () {
+      Polymer({
+        is: 'draw-list-datasource',
+        properties: {
+          lists: {
+            type: Object,
+            value: null
+          }
+        },
+        ready: function() {
+        },
+        save: function() {
+          var o = this.$.fb.add({"much":"wow"});
+          var key = o.key();
+        },
+      });
+    })();
+  </script>
+
+</dom-module>

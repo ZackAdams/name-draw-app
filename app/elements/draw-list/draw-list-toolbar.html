@@ -1,0 +1,43 @@
+<dom-module id="draw-list-toolbar">
+  <style>
+    paper-toolbar {
+      background-color: var(--paper-blue-600);
+    }
+    h1 {
+      font-size: 1.5em;
+      font-weight: 400;
+    }
+  </style>
+  
+  <template>
+    
+    <paper-toolbar>
+      <h1 class="flex">Name Draw</h1>
+      <iron-pages attr-for-selected="data-route" selected="{{selected}}">
+        <paper-icon-button data-route="home" icon="done" on-tap="save"></paper-icon-button>
+      <iron-pages>
+    </paper-toolbar>
+    
+  </template>
+
+  <script>
+    (function () {
+      Polymer({
+        is: 'draw-list-toolbar',
+        properties: {
+          selected: {
+            type: String,
+            value: ""
+          }
+        },
+        ready: function() {
+          
+        },
+        save: function() {
+          this.fire('save');
+        }
+      });
+    })();
+  </script>
+
+</dom-module>

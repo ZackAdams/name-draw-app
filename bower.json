@@ -1,0 +1,21 @@
+{
+  "name": "polymer-starter-kit",
+  "private": true,
+  "dependencies": {
+    "iron-elements": "PolymerElements/iron-elements#1.0.0",
+    "iron-list": "PolymerElements/iron-list#~1.0.3",
+    "neon-elements": "PolymerElements/neon-elements#1.0.0",
+    "page": "visionmedia/page.js#~1.6.3",
+    "paper-dialog": "PolymerElements/paper-dialog#~1.0.2",
+    "paper-dropdown-menu": "PolymerElements/paper-dropdown-menu#~1.0.2",
+    "paper-elements": "PolymerElements/paper-elements#1.0.1",
+    "platinum-elements": "PolymerElements/platinum-elements#1.0.1",
+    "firebase-element": "ZackAdams/firebase-element#~1.0.7",
+    "paper-dialog-behavior": "PolymerElements/paper-dialog-behavior#~1.0.6",
+    "iron-overlay-behavior": "PolymerElements/iron-overlay-behavior#~1.0.9"
+  },
+  "devDependencies": {
+    "web-component-tester": "*",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0"
+  }
+}

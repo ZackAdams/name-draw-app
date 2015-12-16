@@ -1,0 +1,149 @@
+<dom-module id="draw-list-list">
+  <style>
+    #buttons {
+      margin: 0 auto;
+    }
+    paper-button {
+      background: var(--paper-blue-400);
+      color: white;
+    }
+    #msg {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      color: var(--paper-blue-400);
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    #msg h2{
+      font-size: 1.5em;
+      margin-left: 20px;
+      line-height: 1em;
+    }
+    #msg p {
+      text-align: right;
+      margin-right: 20px;
+      line-height: 2em;
+      font-size: 1em;
+      line-height: 1.5em;
+    }
+    #msg p.name {
+      margin: 0;
+      background-color: var(--paper-blue-400);
+      font-size: 4em;
+      line-height: 1.5em;
+      color: white;
+      font-weight: 700;
+      text-shadow: 0px -1px 0px black;
+      text-align: center;
+    }
+    #welcome {
+      padding: 10px 25px;
+      margin-bottom: 5px;
+      color: var(--paper-blue-grey-700);
+      display: block;
+      background: #fff;
+      box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+      outline: 0;
+    }
+    #welcome h2 {
+      color: var(--paper-blue-400);
+    }
+  </style>
+  
+  <template>
+
+    <firebase-collection location="{{location}}" data="{{_list}}"></firebase-collection>
+    <firebase-document id="db"></firebase-document>
+    <iron-localstorage id="ls" name="app-storage" value="{{_storage}}" on-iron-localstorage-load-empty="initStorage" on-iron-localstorage-load="loadStorage"></iron-localstorage>
+  
+    <div class="list" role="list">
+      <paper-item id="welcome">
+        <h2>Hello!</h2>
+        <p>Select your name from the list below to draw. Pick only your name! Remeber who you drew because you may not be able draw again.</p>
+      </paper-item>
+      <template is="dom-repeat" items="{{_list}}" as="person">
+        <draw-list-person name="{{person.name}}" disabled={{person.hasDrawn}}>
+          <div id="buttons">
+            <paper-button raised on-tap="draw">Draw</paper-button>
+          </div>
+        </draw-list-person>
+      </template>
+    </div>
+    
+    <div id="msg" hidden="{{!_person.hasDrawn}}">
+      <h2>You drew...</h2>
+      <p class="name">{{_person.drawName}}</p>
+      <p>Now get shopping!</p>
+    </div>
+    
+  </template>
+
+  <script>
+    (function () {
+      Polymer({
+        is: 'draw-list-list',
+        properties: {
+          location: {
+            type: String,
+            notify: true,
+            value: ""
+          },
+          _key: {
+            type: String,
+            notify: true,
+            value: ""
+          },
+          _storage: {
+            type: Object,
+            notify: true,
+            value: {}
+          },
+          _list: {
+            type: Array,
+            notify: true,
+            value: []
+          }
+        },
+        ready: function() {
+          this.set('_key', document.location.pathname.split('/').pop());
+        },
+        initStorage: function() {
+          this.set('_storage',{});
+          this.loadStorage();
+        },
+        loadStorage: function() {
+          this.set('_person', this.get('_storage.'+ this._key) || {
+            hasDrawn: false
+          });
+        },
+        draw: function(e) {
+          if(!this._person.hasDrawn) {
+            var person = e.model.person;
+            
+            this.$.db.location = this.location + '/' + person.__firebaseKey__;
+            this.$.db.set('data.hasDrawn',true);
+            
+            var drawName = CryptoJS.AES.decrypt(person.drawName, "Hello Brian! What'cha doing here?").toString(CryptoJS.enc.Utf8);
+            
+            this.set('_storage.'+ this._key, {
+              name: person.name,
+              drawName: drawName,
+              hasDrawn: true
+            });
+            this.set('_person', this.get('_storage.'+ this._key));
+          } else {
+            //wat
+            console.log('you shall not pass!');
+          }
+        }
+      });
+    })();
+  </script>
+
+</dom-module>

@@ -1,0 +1,215 @@
+<link rel="import" href="aes.html">
+<dom-module id="draw-list">
+  <style>
+    h2 {
+      color: var(--paper-blue-400);
+    }
+    paper-item {
+      display: block;
+      background: #fff;
+      box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+      outline: 0;
+    }
+    paper-dialog {
+      background-color: white;
+    }
+    paper-dialog#error h2{
+      color: var(--paper-red-400);
+    }
+    #welcome {
+      padding: 10px 25px;
+      margin-bottom: 5px;
+      color: var(--paper-blue-grey-700);
+    }
+  </style>
+  <template>
+    
+      <paper-dialog id="error" modal="true">
+        <h2>Uh-oh..</h2>
+        <p>{{_error}}</p>
+        <div class="buttons">
+          <paper-button dialog-dismiss>OK</paper-button>
+        </div>
+      </paper-dialog>
+    
+      <paper-dialog id="listURL" modal="true">
+        <h2>Success!</h2>
+        <p>Your list has been created. Share the link below.</p>
+        <paper-input value="{{_listURL}}" no-label-float></paper-input>
+        <div class="buttons">
+          <paper-button dialog-dismiss>OK</paper-button>
+        </div>
+      </paper-dialog>
+
+      <div class="list" role="list">
+        <paper-item id="welcome">
+          <h2>Welcome!</h2>
+          <p>This is a simple name drawing app that allows you to create a list of names with restrictions on who can draw who. Add names using the field below. When you're done click the button at the top and you will be given a link to share the list.</p>
+        </paper-item>
+        <template is="dom-repeat" items="{{people}}" as="person">
+          <draw-list-person name="{{person.name}}" on-remove="handleRemove" removeable>
+            <draw-list-rules person="{{person}}" people={{people}}></draw-list-rules>
+          </draw-list-person>
+        </template>
+        <paper-item id="addName">
+          <paper-input class="flex" no-label-float label="Add Name" on-change="addName" bind-value="{{_nameValue}}" value="{{_nameValue::input}}"></paper-input>
+        </paper-item>
+      </div>
+    
+      <firebase-collection id="db" location="{{_location}}" write-only="true"></firebase-collection>
+    
+  </template>
+
+  <script>
+    (function () {
+      Polymer({
+        is: 'draw-list',
+        properties: {
+          people: {
+            type: Array,
+            notify: true,
+            value: []
+          },
+          key: {
+            type: String,
+            notify: true,
+          },
+          _nameValue: {
+            type: String,
+            notify: true,
+          },
+          _lastID: {
+            type: Number,
+            value: 0
+          },
+          _location: {
+            type: String,
+            notify: true,
+            value: "https://incandescent-fire-4896.firebaseio.com/lists"
+          },
+          _error: {
+            type: String,
+            notify: true,
+          },
+          _listURL: {
+            type: String,
+            notify: true,
+          },
+        },
+        ready: function() {
+          document.addEventListener('save',this.save.bind(this));
+          //document.addEventListener('remove',this.handleRemove.bind(this));
+          //this.addTestPeople();
+        },
+        addTestPeople: function () {
+          this.set('people',[
+            {"name":"Michael","id":10,"isRestricted":true,"restrictList":[11,20,21]},
+            {"name":"Rachel","id":11,"isRestricted":false,"restrictList":[]},
+            {"name":"Brian","id":20,"isRestricted":false,"restrictList":[]},
+            {"name":"Amber","id":21,"isRestricted":false,"restrictList":[]},
+            {"name":"Robbie","id":30,"isRestricted":false,"restrictList":[]},
+            {"name":"Katie","id":31,"isRestricted":false,"restrictList":[]}
+          ]);
+          for (var i = 0; i < this.people.length; i++) {
+            this._lastID = Math.max(this.people[i].id, this._lastID);
+          }
+        },
+        nextID: function(){
+          return this._lastID += 1;
+        },
+        addName: function(e) {
+          if (/\S/.test(this._nameValue)) {
+            this.push('people', {
+              name: this._nameValue.trim(),
+              id: this.nextID(),
+              hasDrawn: false,
+              isRestricted: false,
+              restrictList: []
+            });
+            this.set('_nameValue', '');
+            this.fire('update');
+          }
+        },
+        getNameById: function(id) {
+          for (var i in this.people) {
+            if (id == this.people[i].id) {
+              return this.people[i].name;
+            }
+          }
+          return undefined;
+        },
+        handleRemove: function(e) {
+          var id = e.model.person.id;
+          for (var i = 0; i < this.people.length; i++) {
+            if(this.people[i].id == id) {
+              this.splice('people',i,1);
+              this.fire('update');
+            }
+          }
+        },
+        save: function(e) {
+          var list = this.draw();
+          if (list && list.length) {
+            var o = this.$.db.add(list);
+            var key = o.key();
+            this.set('_listURL',window.location.origin+'/list/'+key);
+            this.$.listURL.open();
+            this.$.listURL.querySelector('input').select();
+          }
+        },
+        draw: function() {
+          var nextPerson;
+          var hasDrawnList = [];
+          var hasBeenDrawnList = [];
+          var list = [];
+          var person;
+          
+          if (this.people.length < 2) {
+            this._error = "You should probably add more people.";
+            this.$.error.open();
+            return undefined;
+          }
+          
+          do {
+            nextPerson = undefined;
+            for ( var i = 0; i < this.people.length; i++) {
+              person = this.people[i];
+              if(hasDrawnList.indexOf(person.id) < 0 && (!nextPerson || nextPerson.restrictList.length < person.restrictList.length)) {
+                nextPerson = person;
+              }
+            }
+            if(nextPerson) {
+              console.log("drawing for: " + nextPerson.name);
+              var canDrawList = [];
+              for ( var j = 0; j < this.people.length; j++) {
+                person = this.people[j];
+                if (person.id != nextPerson.id && nextPerson.restrictList.indexOf(person.id) < 0 && hasBeenDrawnList.indexOf(person.id) < 0) {
+                  canDrawList.push(person.id);
+                }
+              }
+              if (canDrawList.length < 1) { 
+                this._error = nextPerson.name + " isn't able to draw anyone! Check your restrictions and try again.";
+                this.$.error.open();
+                return undefined;
+              }
+              var drawnId = canDrawList[Math.floor(Math.random() * canDrawList.length)];
+              hasDrawnList.push(nextPerson.id);
+              hasBeenDrawnList.push(drawnId);
+              var drawName = this.getNameById(drawnId);
+              var encDrawName = CryptoJS.AES.encrypt(drawName, "Hello Brian! What'cha doing here?").toString();
+              list.push({
+                name: nextPerson.name,
+                drawName: encDrawName,
+                hasDrawn: false
+              });
+              console.log("drew: " +drawnId);
+            }
+          } while (nextPerson);
+          console.log("done!", list);
+          return list;
+        }
+      });
+    })();
+  </script>
+
+</dom-module>

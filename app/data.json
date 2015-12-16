@@ -1,0 +1,10 @@
+{
+    "people": [
+        {"name":"Michael","id":10,"isRestricted":true,"restrictList":[11,20,21]},
+        {"name":"Rachel","id":11,"isRestricted":false,"restrictList":[]},
+        {"name":"Brian","id":20,"isRestricted":false,"restrictList":[]},
+        {"name":"Amber","id":21,"isRestricted":false,"restrictList":[]},
+        {"name":"Robbie","id":30,"isRestricted":false,"restrictList":[]},
+        {"name":"Katie","id":31,"isRestricted":false,"restrictList":[]}
+    ]
+}

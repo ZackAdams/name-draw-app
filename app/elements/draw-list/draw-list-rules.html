@@ -1,0 +1,123 @@
+<dom-module id="draw-list-rules">
+  <style>
+  :host {
+    width: 100%;
+    border-top: 1px solid #e5e5e5;
+    border-bottom: 1px solid #e5e5e5;
+    
+    --paper-dropdown-menu-icon: {
+      color: blue;
+    };
+  }
+  #nameSelect {
+    width: 100%;
+    padding: 0;
+  }
+  </style>
+  
+  <template>
+    <div>
+      
+        <paper-menu-button id="nameSelect" horizontal-align="right" vertical-align="top">
+          <paper-item class="dropdown-trigger">
+            <div class="flex">
+              <span>Cannot draw...</span>
+            </div>
+            <paper-icon-button icon="add"></paper-icon-button>
+          </paper-item>
+          <paper-menu class="dropdown-content">
+            <template is="dom-repeat" items="[[_availableList]]" as="id">
+              <paper-item on-tap="addRestriction" value="[[id]]">[[getNameById(id)]]</paper-item>
+            </template>
+          </paper-menu>
+        </paper-menu-button>
+        
+        <template is="dom-repeat" items="{{person.restrictList}}" as="id">
+          <paper-item>
+            <div class="flex">
+              <span>{{getNameById(id)}}</span>
+            </div>
+            <paper-icon-button icon="clear" on-tap="removeRestriction"></paper-icon-button>
+          </paper-item>
+        </template>
+          
+    </div>
+  </template>
+
+  <script>
+    (function () {
+      Polymer({
+        is: 'draw-list-rules',
+        
+        properties: {
+          person: {
+            type: Object,
+            notify: true,
+            value: {}
+          },
+          people: {
+            type: Array,
+            notify: true,
+            value: []
+          },
+          _availableList: {
+            type: Array,
+            notify: true,
+            value: []
+          },
+        },
+        
+        ready: function() {
+          this.updateAvailableList();
+          var b = document.addEventListener('update', this.handleUpdate.bind(this));
+        },
+        getNameById: function(id) {
+          for (var i in this.people) {
+            if (id == this.people[i].id) {
+              return this.people[i].name;
+            }
+          }
+          return undefined;
+        },
+        handleUpdate: function() {
+          this.updateAvailableList();
+          this.updateRestrictList();
+        },
+        updateAvailableList: function () {
+          var l = [];
+          for (var i = 0; i < this.people.length; i++) {
+            var id = this.people[i].id;
+            if (this.person.restrictList.indexOf(id) < 0 && id != this.person.id) {
+              l.push(id);
+            }
+          }
+          this.set('_availableList',l);
+        },
+        updateRestrictList: function() {
+          for(var i = 0; i < this.person.restrictList.length; i++) {
+            var id = this.person.restrictList[i];
+            var found = false;
+            for(var j = 0; j < this.people.length; j++) {
+              if( id == this.people[j].id) {
+                found = true;
+              }
+            }
+            if(!found) {
+              this.splice('person.restrictList',i,1);
+            }
+          }
+        },
+        addRestriction: function(e) {
+          this.push('person.restrictList',e.model.id);
+          this.updateAvailableList();
+        },
+        removeRestriction: function(e) {
+          var i = this.person.restrictList.indexOf(e.model.id);
+          this.splice('person.restrictList',i,1);
+          this.updateAvailableList();
+        },
+      });
+    })();
+  </script>
+
+</dom-module>
